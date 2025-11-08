@@ -1,39 +1,43 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'package:ecommerce_app/providers/cart_provider.dart';
 import 'package:ecommerce_app/screens/auth_wrapper.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'package:ecommerce_app/providers/cart_provider.dart'; // 1. ADD THIS
-import 'package:provider/provider.dart'; // 2. ADD THIS
+import 'package:provider/provider.dart';
+import 'firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+const Color kRichBlack = Color(0xFF1D1F24);
+const Color kBrown = Color(0xFF8B5E3C);
+const Color kLightBrown = Color(0xFFD2B48C);
+const Color kOffWhite = Color(0xFFF8F4F0);
 
 void main() async {
-
-  // 1. Preserve the splash screen
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  // 2. Initialize Firebase (from Module 1)
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // 3. Run the app (from Module 1)
+  await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
+
+  final cartProvider = CartProvider();
+  cartProvider.initializeAuthListener();
+
   runApp(
-    // 2. We wrap our app in the provider
-    ChangeNotifierProvider(
-      // 3. This "creates" one instance of our cart
-      create: (context) => CartProvider(),
-      // 4. The child is our normal app
+    ChangeNotifierProvider.value(
+      value: cartProvider,
       child: const MyApp(),
     ),
   );
 
-  // 4. Remove the splash screen after app is ready
   FlutterNativeSplash.remove();
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key}); // Added const constructor
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -41,8 +45,55 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'eCommerce App',
       theme: ThemeData(
-        primarySwatch: Colors.pink,
-        useMaterial3: true, // Optional: for Material 3
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: kBrown,
+          brightness: Brightness.light,
+          primary: kBrown,
+          onPrimary: Colors.white,
+          secondary: kLightBrown,
+          background: kOffWhite,
+        ),
+        useMaterial3: true,
+        scaffoldBackgroundColor: kOffWhite,
+        textTheme: GoogleFonts.latoTextTheme(
+          Theme.of(context).textTheme,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: kBrown,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide: BorderSide(color: Colors.grey[400]!),
+          ),
+          labelStyle: TextStyle(color: kBrown.withOpacity(0.8)),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide: const BorderSide(color: kBrown, width: 2.0),
+          ),
+        ),
+        // Corrected to use CardThemeData as required.
+        cardTheme: CardThemeData(
+          elevation: 1,
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          clipBehavior: Clip.antiAlias,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: kRichBlack,
+          elevation: 0,
+          centerTitle: true,
+        ),
       ),
       home: const AuthWrapper(),
     );
